@@ -105,7 +105,8 @@ hook.Add("PlayerDeath", "PlayerDeath", function(victim, inflictor, attacker)
         end
       end
       -- add death to victim
-      DB.roundStats.playerStats[victim:SteamID64()]["death"] = true
+      DB.roundStats.playerStats[victim:SteamID64()]["deaths"] = DB.roundStats.playerStats[victim:SteamID64()]["deaths"] +
+      1
     end
   end
 end)
