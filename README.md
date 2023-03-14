@@ -1,6 +1,6 @@
 # TTT2 Stats
 
-Record TTT2 player stats and save it to a MySQL Database.
+Record TTT2 player stats and save them to a MySQL Database.
 
 # Installation
 
