@@ -5,7 +5,7 @@ local tablesSql = [[
     CREATE TABLE IF NOT EXISTS map (
       map_id MEDIUMINT NOT NULL AUTO_INCREMENT,
       map_name VARCHAR(255) NOT NULL,
-      start_date DATETIME NOT NULL,
+      map_start_date DATETIME NOT NULL,
 
       PRIMARY KEY (map_id)
     );
@@ -13,8 +13,8 @@ local tablesSql = [[
     CREATE TABLE IF NOT EXISTS round (
       round_id MEDIUMINT NOT NULL AUTO_INCREMENT,
       map_id MEDIUMINT NOT NULL,
-      start_date DATETIME NOT NULL,
-      end_date DATETIME NOT NULL,
+      round_start_date DATETIME NOT NULL,
+      round_end_date DATETIME NOT NULL,
       winner_team_name VARCHAR(255) NOT NULL,
 
       PRIMARY KEY (round_id)
