@@ -28,6 +28,7 @@ local tablesSql = [[
       kill_num INT NOT NULL,
       team_kill_num INT NOT NULL,
       death_num INT NOT NULL,
+      headshot_num INT NOT NULL,
 
       PRIMARY KEY (statistics_id)
     );
@@ -58,6 +59,7 @@ DB.initialPlayerStats = {
   kills = 0,
   teamKills = 0,
   deaths = 0,
+  headshots = 0,
 }
 
 function DB.log(msg)
@@ -142,7 +144,7 @@ function DB:addRound()
     end
 
     local statsSql =
-    "INSERT INTO statistics (round_id, steam_id, team_name, kill_num, team_kill_num, death_num) VALUES (?, ?, ?, ?, ?, ?)"
+    "INSERT INTO statistics (round_id, steam_id, team_name, kill_num, team_kill_num, death_num, headshot_num) VALUES (?, ?, ?, ?, ?, ?, ?)"
     local statsPrep = connection:prepare(statsSql)
     statsPrep:setNumber(1, roundID)
     for steamID, stats in pairs(roundStats.playerStats) do
@@ -151,6 +153,7 @@ function DB:addRound()
       statsPrep:setNumber(4, stats.kills)
       statsPrep:setNumber(5, stats.teamKills)
       statsPrep:setNumber(6, stats.deaths)
+      statsPrep:setNumber(7, stats.headshots)
       transaction:addQuery(statsPrep)
     end
 

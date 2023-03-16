@@ -106,6 +106,11 @@ hook.Add("PlayerDeath", "PlayerDeath", function(victim, inflictor, attacker)
                 -- else add normal kill
                 attackerStats["kills"] = attackerStats["kills"] + 1
               end
+              -- check for headshot
+              if victim:LastHitGroup() == 1 then
+                -- add headshot to attacker
+                attackerStats["headshots"] = attackerStats["headshots"] + 1
+              end
             end
           end
         end
