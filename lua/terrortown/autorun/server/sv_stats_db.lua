@@ -121,7 +121,7 @@ function DB:addRound()
   local roundStats = Utils.shallowcopy(self.roundStats)
 
   local roundSql =
-  "INSERT INTO round (map_id, round_start_date, round_end_date, winner_team_name) VALUES ((SELECT map_id FROM map ORDER BY start_date DESC LIMIT 1), ?, ?, ?)"
+  "INSERT INTO round (map_id, round_start_date, round_end_date, winner_team_name) VALUES ((SELECT map_id FROM map ORDER BY map_start_date DESC LIMIT 1), ?, ?, ?)"
   local roundPrep = connection:prepare(roundSql)
   roundPrep:setString(1, roundStats.startTime)
   roundPrep:setString(2, roundStats.endTime)
