@@ -73,7 +73,10 @@ hook.Add("TTTEndRound", "EndRound", function(result)
   DB.roundStats.endTime = Utils.getFormattedDate()
   DB.roundStats.winnerTeam = result
   for steamID, stats in pairs(DB.roundStats.playerStats) do
-    stats["team"] = player.GetBySteamID64(steamID):GetTeam()
+    -- check for type "Player" (if not the player probably  disconnected)
+    if type(player.GetBySteamID64(steamID)) == "Player" then
+      stats["team"] = player.GetBySteamID64(steamID):GetTeam()
+    end
   end
 
   DB:addRound()
@@ -85,28 +88,37 @@ hook.Add("PlayerDeath", "PlayerDeath", function(victim, inflictor, attacker)
   if DB.roundStats.endTime ~= nil and DB.roundStats.endTime == "" then
     -- victim is not a bot
     if not victim:IsBot() then
-      -- attacker is a player
-      if attacker:IsPlayer() then
-        -- attacker and victim are in the current round
-        if DB.roundStats.playerStats[attacker:SteamID64()] ~= nil and DB.roundStats.playerStats[victim:SteamID64()] ~= nil then
-          -- attacker is not the victim
-          if attacker ~= victim then
-            -- attacker and victim are in the same team
-            if attacker:GetTeam() == victim:GetTeam() then
-              -- add teamkill to killer if they are in the same team
-              DB.roundStats.playerStats[attacker:SteamID64()]["teamKills"] = DB.roundStats.playerStats
-                  [attacker:SteamID64()]["teamKills"] + 1
-            else
-              -- else add normal kill
-              DB.roundStats.playerStats[attacker:SteamID64()]["kills"] = DB.roundStats.playerStats[attacker:SteamID64()]
-                  ["kills"] + 1
+      local victimStats = DB.roundStats.playerStats[victim:SteamID64()]
+      -- victim is in the current round
+      if victimStats ~= nil then
+        -- attacker is a player
+        if attacker:IsPlayer() then
+          local attackerStats = DB.roundStats.playerStats[attacker:SteamID64()]
+          -- attacker is in the current round
+          if attackerStats ~= nil then
+            -- attacker is not the victim
+            if attacker ~= victim then
+              -- attacker and victim are in the same team
+              if attacker:GetTeam() == victim:GetTeam() then
+                -- add teamkill to killer if they are in the same team
+                attackerStats["teamKills"] = attackerStats["teamKills"] + 1
+              else
+                -- else add normal kill
+                attackerStats["kills"] = attackerStats["kills"] + 1
+              end
             end
           end
         end
+        -- add death to victim
+        victimStats["deaths"] = victimStats["deaths"] + 1
       end
-      -- add death to victim
-      DB.roundStats.playerStats[victim:SteamID64()]["deaths"] = DB.roundStats.playerStats[victim:SteamID64()]["deaths"] +
-      1
     end
+  end
+end)
+
+hook.Add("PlayerDisconnected", "PlayerDisconnected", function(ply)
+  -- add player team on disconnect
+  if DB.roundStats.playerStats ~= nil and DB.roundStats.playerStats[ply:SteamID64()] ~= nil then
+    DB.roundStats.playerStats[ply:SteamID64()]["team"] = ply:GetTeam()
   end
 end)
