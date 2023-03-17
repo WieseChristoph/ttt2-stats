@@ -25,12 +25,20 @@ local tablesSql = [[
       round_id MEDIUMINT NOT NULL,
       steam_id BIGINT UNSIGNED NOT NULL,
       team_name VARCHAR(255) NOT NULL,
-      kill_num INT NOT NULL,
-      team_kill_num INT NOT NULL,
-      death_num INT NOT NULL,
-      headshot_num INT NOT NULL,
 
       PRIMARY KEY (statistics_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS death (
+      death_id MEDIUMINT NOT NULL AUTO_INCREMENT,
+      statistics_id MEDIUMINT NOT NULL,
+      victim_id BIGINT UNSIGNED NOT NULL,
+      attacker_id BIGINT UNSIGNED,
+      teamkill_status BOOL NOT NULL,
+      inflictor_name VARCHAR(255),
+      hitgroup_id INT NOT NULL,
+
+      PRIMARY KEY (death_id)
     );
   ]]
 
@@ -56,10 +64,15 @@ DB.initialRoundStats = {
 
 DB.initialPlayerStats = {
   team = "",
-  kills = 0,
-  teamKills = 0,
-  deaths = 0,
-  headshots = 0,
+  deaths = {}
+}
+
+DB.initialDeathStats = {
+  victim = 0,
+  attacker = nil,
+  teamkill = false,
+  inflictor = nil,
+  hitgroup = 0
 }
 
 function DB.log(msg)
@@ -120,7 +133,7 @@ function DB:addRound()
   DB.log("Adding round")
   local connection = self:connect()
 
-  local roundStats = Utils.shallowcopy(self.roundStats)
+  local roundStats = Utils.deepcopy(self.roundStats)
 
   local roundSql =
   "INSERT INTO round (map_id, round_start_date, round_end_date, winner_team_name) VALUES ((SELECT map_id FROM map ORDER BY map_start_date DESC LIMIT 1), ?, ?, ?)"
@@ -143,18 +156,36 @@ function DB:addRound()
       DB.log("Error: " .. err)
     end
 
-    local statsSql =
-    "INSERT INTO statistics (round_id, steam_id, team_name, kill_num, team_kill_num, death_num, headshot_num) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    local statsSql = "INSERT INTO statistics (round_id, steam_id, team_name) VALUES (?, ?, ?);"
+    local deathSql =
+    "INSERT INTO death (statistics_id, victim_id, attacker_id, teamkill_status, inflictor_name, hitgroup_id) VALUES (LAST_INSERT_ID(), ?, ?, ?, ?, ?);"
+
     local statsPrep = connection:prepare(statsSql)
-    statsPrep:setNumber(1, roundID)
+    local deathPrep = connection:prepare(deathSql)
+
     for steamID, stats in pairs(roundStats.playerStats) do
+      statsPrep:setNumber(1, roundID)
       statsPrep:setString(2, steamID)
       statsPrep:setString(3, stats.team)
-      statsPrep:setNumber(4, stats.kills)
-      statsPrep:setNumber(5, stats.teamKills)
-      statsPrep:setNumber(6, stats.deaths)
-      statsPrep:setNumber(7, stats.headshots)
       transaction:addQuery(statsPrep)
+      statsPrep:clearParameters()
+      for index, death in ipairs(stats.deaths) do
+        deathPrep:setString(1, death.victim)
+        if (death.attacker == nil) then
+          deathPrep:setNull(2)
+        else
+          deathPrep:setString(2, death.attacker)
+        end
+        deathPrep:setBoolean(3, death.teamkill)
+        if (death.inflictor == nil) then
+          deathPrep:setNull(4)
+        else
+          deathPrep:setString(4, death.inflictor)
+        end
+        deathPrep:setNumber(5, death.hitgroup)
+        transaction:addQuery(deathPrep)
+        deathPrep:clearParameters()
+      end
     end
 
     transaction:start()

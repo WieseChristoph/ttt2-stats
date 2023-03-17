@@ -58,12 +58,12 @@ end)
 
 hook.Add("TTTBeginRound", "BeginRound", function()
   -- init round stats
-  DB.roundStats = Utils.shallowcopy(DB.initialRoundStats)
+  DB.roundStats = Utils.deepcopy(DB.initialRoundStats)
   DB.roundStats.startTime = Utils.getFormattedDate()
   -- init player stats
   for i, ply in ipairs(player.GetAll()) do
     if not ply:IsSpec() and not ply:IsBot() then
-      DB.roundStats.playerStats[ply:SteamID64()] = Utils.shallowcopy(DB.initialPlayerStats)
+      DB.roundStats.playerStats[ply:SteamID64()] = Utils.deepcopy(DB.initialPlayerStats)
     end
   end
 end)
@@ -91,31 +91,29 @@ hook.Add("PlayerDeath", "PlayerDeath", function(victim, inflictor, attacker)
       local victimStats = DB.roundStats.playerStats[victim:SteamID64()]
       -- victim is in the current round
       if victimStats ~= nil then
-        -- attacker is a player
-        if attacker:IsPlayer() then
-          local attackerStats = DB.roundStats.playerStats[attacker:SteamID64()]
-          -- attacker is in the current round
-          if attackerStats ~= nil then
-            -- attacker is not the victim
-            if attacker ~= victim then
-              -- attacker and victim are in the same team
-              if attacker:GetTeam() == victim:GetTeam() then
-                -- add teamkill to killer if they are in the same team
-                attackerStats["teamKills"] = attackerStats["teamKills"] + 1
-              else
-                -- else add normal kill
-                attackerStats["kills"] = attackerStats["kills"] + 1
-              end
-              -- check for headshot
-              if victim:LastHitGroup() == 1 then
-                -- add headshot to attacker
-                attackerStats["headshots"] = attackerStats["headshots"] + 1
-              end
+        if attacker ~= victim then
+          local deathStats = Utils.deepcopy(DB.initialDeathStats)
+
+          deathStats.victim = victim:SteamID64()
+          deathStats.hitgroup = victim:LastHitGroup()
+
+          if attacker:IsPlayer() then
+            deathStats.attacker = attacker:SteamID64()
+            if attacker:GetTeam() == victim:GetTeam() then
+              deathStats.teamkill = true
             end
           end
+
+          if inflictor ~= nil then
+            if type(inflictor) == "Player" then
+              deathStats.inflictor = inflictor:GetActiveWeapon():GetPrintName()
+            else
+              deathStats.inflictor = inflictor:GetClass()
+            end
+          end
+
+          table.insert(victimStats.deaths, deathStats)
         end
-        -- add death to victim
-        victimStats["deaths"] = victimStats["deaths"] + 1
       end
     end
   end
