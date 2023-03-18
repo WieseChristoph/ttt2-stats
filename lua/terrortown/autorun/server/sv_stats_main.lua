@@ -94,7 +94,6 @@ hook.Add("PlayerDeath", "PlayerDeath", function(victim, inflictor, attacker)
         if attacker ~= victim then
           local deathStats = Utils.deepcopy(DB.initialDeathStats)
 
-          deathStats.victim = victim:SteamID64()
           deathStats.hitgroup = victim:LastHitGroup()
 
           if attacker:IsPlayer() then

@@ -32,7 +32,6 @@ local tablesSql = [[
     CREATE TABLE IF NOT EXISTS death (
       death_id MEDIUMINT NOT NULL AUTO_INCREMENT,
       statistics_id MEDIUMINT NOT NULL,
-      victim_id BIGINT UNSIGNED NOT NULL,
       attacker_id BIGINT UNSIGNED,
       teamkill_status BOOL NOT NULL,
       inflictor_name VARCHAR(255),
@@ -68,7 +67,6 @@ DB.initialPlayerStats = {
 }
 
 DB.initialDeathStats = {
-  victim = 0,
   attacker = nil,
   teamkill = false,
   inflictor = nil,
@@ -158,7 +156,7 @@ function DB:addRound()
 
     local statsSql = "INSERT INTO statistics (round_id, steam_id, team_name) VALUES (?, ?, ?);"
     local deathSql =
-    "INSERT INTO death (statistics_id, victim_id, attacker_id, teamkill_status, inflictor_name, hitgroup_id) VALUES (LAST_INSERT_ID(), ?, ?, ?, ?, ?);"
+    "INSERT INTO death (statistics_id, attacker_id, teamkill_status, inflictor_name, hitgroup_id) VALUES (LAST_INSERT_ID(), ?, ?, ?, ?);"
 
     local statsPrep = connection:prepare(statsSql)
     local deathPrep = connection:prepare(deathSql)
@@ -170,19 +168,18 @@ function DB:addRound()
       transaction:addQuery(statsPrep)
       statsPrep:clearParameters()
       for index, death in ipairs(stats.deaths) do
-        deathPrep:setString(1, death.victim)
         if (death.attacker == nil) then
-          deathPrep:setNull(2)
+          deathPrep:setNull(1)
         else
-          deathPrep:setString(2, death.attacker)
+          deathPrep:setString(1, death.attacker)
         end
-        deathPrep:setBoolean(3, death.teamkill)
+        deathPrep:setBoolean(2, death.teamkill)
         if (death.inflictor == nil) then
-          deathPrep:setNull(4)
+          deathPrep:setNull(3)
         else
-          deathPrep:setString(4, death.inflictor)
+          deathPrep:setString(3, death.inflictor)
         end
-        deathPrep:setNumber(5, death.hitgroup)
+        deathPrep:setNumber(4, death.hitgroup)
         transaction:addQuery(deathPrep)
         deathPrep:clearParameters()
       end
