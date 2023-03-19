@@ -99,32 +99,65 @@ function DB:connect()
 end
 
 function DB:initMap(mapName)
-  DB.log("Creating tables")
   local connection = self:connect()
+  DB.log("Checking for tables")
+
+  local sql =
+  "SELECT COUNT(*) AS tables_found_count FROM INFORMATION_SCHEMA.Tables WHERE TABLE_NAME IN ('map', 'round', 'statistics', 'death');"
+  local query = connection:query(sql)
+  function query:onError(err)
+    DB.log("Error: " .. err)
+  end
+
+  function query:onSuccess(data)
+    local tablesFound = data[1]["tables_found_count"]
+    if tablesFound == 4 then
+      DB.log("Tables found")
+      DB:addMap(mapName)
+    else
+      DB.log("Tables not found")
+      DB:createTables(mapName)
+    end
+  end
+
+  query:start()
+  connection:disconnect(true)
+end
+
+function DB:createTables(mapName)
+  local connection = self:connect()
+  DB.log("Creating tables")
 
   local query = connection:query(tablesSql)
   function query:onError(err)
     DB.log("Error: " .. err)
-    return connection:disconnect()
   end
 
   function query:onSuccess()
-    DB.log("Adding map " .. mapName)
-
-    local sql = "INSERT INTO map (map_name, map_start_date) VALUES (?, ?)"
-    local prep = connection:prepare(sql)
-    prep:setString(1, mapName)
-    prep:setString(2, Utils.getFormattedDate())
-    function prep:onError(err)
-      DB.log("Error: " .. err)
-    end
-
-    prep:start()
-
-    connection:disconnect(true)
+    DB.log("Tables created")
+    DB:addMap(mapName)
   end
 
   query:start()
+
+  connection:disconnect(true)
+end
+
+function DB:addMap(mapName)
+  local connection = self:connect()
+  DB.log("Adding map " .. mapName)
+
+  local sql = "INSERT INTO map (map_name, map_start_date) VALUES (?, ?)"
+  local prep = connection:prepare(sql)
+  prep:setString(1, mapName)
+  prep:setString(2, Utils.getFormattedDate())
+  function prep:onError(err)
+    DB.log("Error: " .. err)
+  end
+
+  prep:start()
+
+  connection:disconnect(true)
 end
 
 function DB:addRound()
