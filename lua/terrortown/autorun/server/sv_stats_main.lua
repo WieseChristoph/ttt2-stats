@@ -105,7 +105,9 @@ hook.Add("PlayerDeath", "PlayerDeath", function(victim, inflictor, attacker)
 
           if inflictor:IsValid() or inflictor == game.GetWorld() then
             if type(inflictor) == "Player" then
-              deathStats.inflictor = inflictor:GetActiveWeapon():GetPrintName()
+              if inflictor:GetActiveWeapon():IsValid() then
+                deathStats.inflictor = inflictor:GetActiveWeapon():GetPrintName()
+              end
             else
               deathStats.inflictor = inflictor:GetClass()
             end
