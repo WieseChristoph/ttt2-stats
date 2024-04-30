@@ -23,7 +23,7 @@ local tablesSql = [[
     CREATE TABLE IF NOT EXISTS statistics (
       statistics_id MEDIUMINT NOT NULL AUTO_INCREMENT,
       round_id MEDIUMINT NOT NULL,
-      steam_id BIGINT UNSIGNED NOT NULL,
+      steam_id VARCHAR(17) NOT NULL,
       team_name VARCHAR(255) NOT NULL,
 
       PRIMARY KEY (statistics_id)
@@ -32,7 +32,7 @@ local tablesSql = [[
     CREATE TABLE IF NOT EXISTS death (
       death_id MEDIUMINT NOT NULL AUTO_INCREMENT,
       statistics_id MEDIUMINT NOT NULL,
-      attacker_id BIGINT UNSIGNED,
+      attacker_id VARCHAR(17),
       teamkill_status BOOL NOT NULL,
       inflictor_name VARCHAR(255),
       hitgroup_id INT NOT NULL,
