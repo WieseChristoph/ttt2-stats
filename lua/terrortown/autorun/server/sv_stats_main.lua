@@ -93,6 +93,7 @@ hook.Add("PlayerDeath", "PlayerDeath", function(victim, inflictor, attacker)
       if victimStats ~= nil then
         if attacker ~= victim then
           local deathStats = Utils.deepcopy(DB.initialDeathStats)
+          deathStats.timeOfDeath = Utils.getFormattedDate()
 
           deathStats.hitgroup = victim:LastHitGroup()
 

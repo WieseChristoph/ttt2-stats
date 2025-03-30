@@ -36,6 +36,7 @@ local tablesSql = [[
       teamkill_status BOOL NOT NULL,
       inflictor_name VARCHAR(255),
       hitgroup_id INT NOT NULL,
+      time_of_death DATETIME NOT NULL,
 
       PRIMARY KEY (death_id)
     );
@@ -70,7 +71,8 @@ DB.initialDeathStats = {
   attacker = nil,
   teamkill = false,
   inflictor = nil,
-  hitgroup = 0
+  hitgroup = 0,
+  timeOfDeath = ""
 }
 
 function DB.log(msg)
@@ -189,7 +191,7 @@ function DB:addRound()
 
     local statsSql = "INSERT INTO statistics (round_id, steam_id, team_name) VALUES (?, ?, ?);"
     local deathSql =
-    "INSERT INTO death (statistics_id, attacker_id, teamkill_status, inflictor_name, hitgroup_id) VALUES (LAST_INSERT_ID(), ?, ?, ?, ?);"
+    "INSERT INTO death (statistics_id, attacker_id, teamkill_status, inflictor_name, hitgroup_id, time_of_death) VALUES (LAST_INSERT_ID(), ?, ?, ?, ?, ?);"
 
     local statsPrep = connection:prepare(statsSql)
     local deathPrep = connection:prepare(deathSql)
@@ -213,6 +215,7 @@ function DB:addRound()
           deathPrep:setString(3, death.inflictor)
         end
         deathPrep:setNumber(4, death.hitgroup)
+        deathPrep:setString(5, death.timeOfDeath)
         transaction:addQuery(deathPrep)
         deathPrep:clearParameters()
       end
